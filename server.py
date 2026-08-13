@@ -1,10 +1,14 @@
 """
-Claude CLI Subscription Adapter
-================================
+Claude CLI Adapter
+==================
 Exposes a local Anthropic-compatible HTTP API that routes every request through
 `claude -p` (Claude Code CLI).  Point Hermes (or any Anthropic-SDK client) at
-http://127.0.0.1:8082 and it will work with your Claude Pro/Max subscription
-without burning overage credits.
+http://127.0.0.1:8082.
+
+What backs it is whatever the CLI is authenticated against:
+  * a Claude Pro/Max/Team subscription, so no API credits are consumed; or
+  * any Anthropic-compatible endpoint, via ANTHROPIC_BASE_URL +
+    ANTHROPIC_AUTH_TOKEN.
 
 Usage:
     python server.py [--port 8082] [--host 127.0.0.1]
@@ -24,7 +28,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 import uvicorn
 
-app = FastAPI(title="Claude CLI Subscription Adapter")
+app = FastAPI(title="Claude CLI Adapter")
 
 # Model used when a client sends no "model" field. It must be a name the
 # configured backend actually knows: pointing the CLI at a gateway via
@@ -412,7 +416,7 @@ async def health():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Claude CLI Subscription Adapter")
+    parser = argparse.ArgumentParser(description="Claude CLI Adapter")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8082)
     args = parser.parse_args()

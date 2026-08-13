@@ -11,8 +11,8 @@
 
 ```bash
 # 1. Clone / download this adapter
-git clone https://github.com/<your-fork>/claudehermessubscriptionadapter
-cd claudehermessubscriptionadapter
+git clone git@github-0xphuong:0xphuong/claude-cli-adapter.git
+cd claude-cli-adapter
 
 # 2. Install dependencies (use a venv if you like)
 pip install -r requirements.txt
@@ -253,17 +253,17 @@ messages back, which the adapter serialises into the dialogue context.
 ### macOS (launchd)
 
 ```xml
-<!-- ~/Library/LaunchAgents/com.claude.subscription-adapter.plist -->
+<!-- ~/Library/LaunchAgents/com.claude.cli-adapter.plist -->
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Label</key><string>com.claude.subscription-adapter</string>
+  <key>Label</key><string>com.claude.cli-adapter</string>
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/python3</string>
-    <string>/path/to/claudehermessubscriptionadapter/server.py</string>
+    <string>/path/to/claude-cli-adapter/server.py</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
@@ -274,7 +274,7 @@ messages back, which the adapter serialises into the dialogue context.
 ```
 
 ```bash
-launchctl load ~/Library/LaunchAgents/com.claude.subscription-adapter.plist
+launchctl load ~/Library/LaunchAgents/com.claude.cli-adapter.plist
 ```
 
 ### Linux (systemd)
@@ -282,10 +282,10 @@ launchctl load ~/Library/LaunchAgents/com.claude.subscription-adapter.plist
 ```ini
 # ~/.config/systemd/user/claude-adapter.service
 [Unit]
-Description=Claude CLI Subscription Adapter
+Description=Claude CLI Adapter
 
 [Service]
-ExecStart=/usr/bin/python3 /path/to/claudehermessubscriptionadapter/server.py
+ExecStart=/usr/bin/python3 /path/to/claude-cli-adapter/server.py
 Restart=always
 
 [Install]

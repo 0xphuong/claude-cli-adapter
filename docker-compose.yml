@@ -1,11 +1,16 @@
+# Pin the project name instead of inheriting it from the directory, so renaming
+# or cloning the checkout elsewhere does not silently orphan the volume and the
+# network under a different prefix.
+name: claude-cli-adapter
+
 services:
   adapter:
     build:
       context: .
       args:
         CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-2.1.229}
-    image: claude-subscription-adapter:latest
-    container_name: claude-subscription-adapter
+    image: claude-cli-adapter:latest
+    container_name: claude-cli-adapter
     restart: unless-stopped
 
     # The adapter has NO authentication of its own — it ignores the API key and

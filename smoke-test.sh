@@ -19,7 +19,7 @@ if [ -z "${ADAPTER_TEST_MODEL:-}" ] && [ -f .env ]; then
   eval "$(grep -E '^ADAPTER_DEFAULT_MODEL=' .env || true)"
 fi
 MODEL="${ADAPTER_TEST_MODEL:-${ADAPTER_DEFAULT_MODEL:-claude-sonnet-4-6}}"
-COMPOSE_NET="${COMPOSE_NET:-claude-subscription-adapter_default}"
+COMPOSE_NET="${COMPOSE_NET:-claude-cli-adapter_default}"
 pass=0 fail=0
 
 ok()   { printf '  \033[32mPASS\033[0m %s\n' "$1"; pass=$((pass + 1)); }

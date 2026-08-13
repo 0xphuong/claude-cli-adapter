@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 #
-# Claude CLI Subscription Adapter
+# Claude CLI Adapter
 # --------------------------------
 # The runtime needs two toolchains: Node (to run the Claude Code CLI) and
 # Python (to run the FastAPI adapter). Both build stages and the runtime share
