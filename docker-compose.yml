@@ -9,7 +9,29 @@ services:
       context: .
       args:
         CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-2.1.229}
-    image: claude-cli-adapter:latest
+
+    # The published image. With `image` and `build` both set, `up` reuses a
+    # matching local image; failing that it TRIES TO PULL, and only builds if
+    # the pull fails. That is a sharp edge worth knowing:
+    #
+    #   * On amd64, `docker compose up -d` in a fresh checkout SUCCEEDS at
+    #     pulling and silently runs the published image, not your local code.
+    #     Always pass --build when you mean to test local changes.
+    #   * On arm64 the amd64-only pull fails and it falls back to building
+    #     natively, which is why it looks like "build by default" here.
+    #
+    #   dev     docker compose up -d --build
+    #   deploy  ADAPTER_IMAGE_TAG=v0.3.0 docker compose pull && docker compose up -d
+    #
+    # Pin a version tag on anything you care about; :latest moves under you.
+    #
+    # Published images are linux/amd64 only:
+    #   * pulling on arm64 needs --platform linux/amd64, and it then runs
+    #     emulated — slow here, because every request spawns a process.
+    #   * a local dev build tags this same name with the NATIVE arch. Never
+    #     `docker push` that by hand; use ./release-image.sh, which always sets
+    #     --platform explicitly.
+    image: docker.io/binhphuong/claude-cli-adapter:${ADAPTER_IMAGE_TAG:-latest}
     container_name: claude-cli-adapter
     restart: unless-stopped
 

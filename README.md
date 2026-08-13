@@ -133,6 +133,40 @@ Rebuild after bumping `CLAUDE_CODE_VERSION` in `.env`:
 docker compose build --no-cache && docker compose up -d
 ```
 
+### Running the published image instead of building
+
+`docker-compose.yml` names the published image and also keeps a `build:` section,
+so one file covers both flows. With both keys set, `up` reuses a matching local
+image; failing that it **tries to pull**, and builds only if the pull fails.
+
+That has a sharp edge. On amd64, `docker compose up -d` in a fresh checkout
+pulls successfully and silently runs the *published* image rather than your local
+code — pass `--build` whenever you mean to test local changes. On arm64 the
+amd64-only pull fails and it falls back to building natively, which makes it look
+like it builds by default. It does not.
+
+```bash
+# Development — build from this checkout
+docker compose up -d --build
+
+# Deployment — run a published build
+ADAPTER_IMAGE_TAG=v0.3.0 docker compose pull
+ADAPTER_IMAGE_TAG=v0.3.0 docker compose up -d
+```
+
+Put `ADAPTER_IMAGE_TAG` in `.env` on a server rather than repeating it. Pin a
+version tag on anything you care about — `:latest` moves under you.
+
+Published images are **`linux/amd64` only**, which has two consequences:
+
+- Pulling on arm64 (Apple Silicon, Graviton) needs `--platform linux/amd64` and
+  then runs emulated. That is a poor fit here, because every request spawns a
+  process. Build natively instead, or publish multi-arch:
+  `PLATFORM=linux/amd64,linux/arm64 ./release-image.sh v0.3.1 --latest`.
+- A local dev build tags that same published name with your **native** arch. Do
+  not `docker push` it by hand — use `./release-image.sh`, which always sets
+  `--platform` explicitly.
+
 ### Testing
 
 ```bash
