@@ -18,7 +18,16 @@ services:
     # shell or in ./.env. An unset variable is omitted entirely rather than
     # injected empty, which would shadow the credentials file.
     environment:
+      # Subscription mode: the login stored in the volume, or a setup-token.
       - CLAUDE_CODE_OAUTH_TOKEN
+      # Token mode: point the CLI at an Anthropic-compatible endpoint instead.
+      # Set both, or neither. ANTHROPIC_API_KEY is mutually exclusive with
+      # ANTHROPIC_AUTH_TOKEN — the entrypoint refuses to start if both are set.
+      - ANTHROPIC_BASE_URL
+      - ANTHROPIC_AUTH_TOKEN
+      - ANTHROPIC_API_KEY
+      # Model used when a client sends no "model" field.
+      - ADAPTER_DEFAULT_MODEL
 
     volumes:
       # The whole HOME, not just ~/.claude — Claude Code keeps state in BOTH

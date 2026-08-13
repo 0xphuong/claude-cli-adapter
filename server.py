@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import re
 import uuid
 from typing import AsyncGenerator, Optional
@@ -24,6 +25,12 @@ from fastapi.responses import JSONResponse, StreamingResponse
 import uvicorn
 
 app = FastAPI(title="Claude CLI Subscription Adapter")
+
+# Model used when a client sends no "model" field. It must be a name the
+# configured backend actually knows: pointing the CLI at a gateway via
+# ANTHROPIC_BASE_URL often means namespaced names such as "cc/claude-sonnet-5",
+# and the Anthropic default below would 404 there.
+DEFAULT_MODEL = os.environ.get("ADAPTER_DEFAULT_MODEL", "claude-opus-4-7")
 
 # ---------------------------------------------------------------------------
 # Request → CLI helpers
@@ -357,7 +364,7 @@ async def post_messages(request: Request):
     messages: list[dict] = body.get("messages", [])
     system_raw = body.get("system", "")
     tools: list[dict] = body.get("tools", [])
-    model: str = body.get("model", "claude-opus-4-7")
+    model: str = body.get("model") or DEFAULT_MODEL
     stream: bool = body.get("stream", False)
 
     system_text = _extract_system_text(system_raw)

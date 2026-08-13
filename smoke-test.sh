@@ -11,7 +11,14 @@
 set -uo pipefail
 
 BASE="${1:-http://127.0.0.1:8082}"
-MODEL="${ADAPTER_TEST_MODEL:-claude-sonnet-4-6}"
+
+# Test the model the service is actually configured to use. A gateway reached
+# via ANTHROPIC_BASE_URL namespaces its models (e.g. "cc/claude-sonnet-5"), so
+# the Anthropic default below would 404 there.
+if [ -z "${ADAPTER_TEST_MODEL:-}" ] && [ -f .env ]; then
+  eval "$(grep -E '^ADAPTER_DEFAULT_MODEL=' .env || true)"
+fi
+MODEL="${ADAPTER_TEST_MODEL:-${ADAPTER_DEFAULT_MODEL:-claude-sonnet-4-6}}"
 COMPOSE_NET="${COMPOSE_NET:-claude-subscription-adapter_default}"
 pass=0 fail=0
 
@@ -36,10 +43,15 @@ fi
 ok "adapter reachable"
 
 auth=$(docker compose run --rm -T adapter claude auth status 2>/dev/null)
+method=$(sed -n 's/.*"authMethod": *"\([^"]*\)".*/\1/p' <<<"$auth")
 if grep -q '"loggedIn": *true' <<<"$auth"; then
-  ok "claude CLI logged in"
+  # claude.ai = stored subscription login; oauth_token = ANTHROPIC_AUTH_TOKEN,
+  # which is also how a request is routed to a non-Anthropic gateway.
+  ok "claude CLI authenticated (authMethod=${method:-unknown})"
 else
-  bad "claude CLI logged in" "run: docker compose run --rm adapter claude auth login"
+  bad "claude CLI authenticated" \
+      "log in with: docker compose run --rm adapter claude auth login
+     or set ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN in .env"
   echo; echo "$pass passed, $fail failed"; exit 1
 fi
 

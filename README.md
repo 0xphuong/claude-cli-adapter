@@ -82,6 +82,39 @@ cp .env.example .env        # paste the value into CLAUDE_CODE_OAUTH_TOKEN=
 docker compose up -d
 ```
 
+### Mode 2 — token against another endpoint
+
+Setting `ANTHROPIC_BASE_URL` and `ANTHROPIC_AUTH_TOKEN` routes the CLI at any
+Anthropic-compatible endpoint, so no subscription and no login are involved:
+
+```dotenv
+ANTHROPIC_BASE_URL=http://your-gateway:port
+ANTHROPIC_AUTH_TOKEN=sk-...
+ADAPTER_DEFAULT_MODEL=cc/claude-sonnet-5
+```
+
+`docker compose up -d` and it works with an empty volume. `claude auth status`
+reports `authMethod: oauth_token` in this mode, versus `claude.ai` for a stored
+subscription login.
+
+Two things to get right:
+
+- **Model names.** A gateway usually namespaces them (`cc/claude-sonnet-5`, not
+  `claude-sonnet-5`). Clients must send the namespaced name, and
+  `ADAPTER_DEFAULT_MODEL` covers requests that send no `model` at all. The
+  hardcoded list at `GET /v1/models` is **not** updated by this setting — it
+  still advertises Anthropic names, so a client that picks from that list will
+  ask for a model the gateway does not have.
+- **Use `ANTHROPIC_AUTH_TOKEN` or `ANTHROPIC_API_KEY`, never both.** Claude Code
+  sends both headers and endpoints reject the request; the entrypoint refuses to
+  start rather than let that fail one request at a time.
+
+> Consider whether you need this adapter at all in this mode. If the endpoint
+> already speaks the Anthropic Messages API, point your client straight at it:
+> you keep real streaming and `count_tokens`, and drop a subprocess per request.
+> The adapter earns its place when the endpoint is *only* reachable through the
+> CLI — that is, a subscription.
+
 Point your client at `http://127.0.0.1:8082` exactly as in the sections below.
 
 ### What the compose file does

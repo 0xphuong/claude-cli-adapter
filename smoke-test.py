@@ -11,8 +11,11 @@ import anthropic
 
 BASE = os.environ.get("ADAPTER_URL", "http://127.0.0.1:8082")
 MODEL = os.environ.get("ADAPTER_TEST_MODEL", "claude-sonnet-4-6")
+# The adapter ignores the key entirely; override it to point this suite at a
+# real Anthropic-compatible endpoint and compare behaviour.
+KEY = os.environ.get("ADAPTER_API_KEY", "dummy")
 
-client = anthropic.Anthropic(base_url=BASE, api_key="dummy")
+client = anthropic.Anthropic(base_url=BASE, api_key=KEY)
 failed = []
 
 print(f"SDK fidelity check against {BASE} (model {MODEL})\n")
