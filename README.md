@@ -169,6 +169,40 @@ curl -s -X POST http://127.0.0.1:8082/v1/messages \
        "messages":[{"role":"user","content":"Reply with exactly: PONG"}]}'
 ```
 
+### Publishing the image
+
+```bash
+docker login                              # once
+./release-image.sh v0.3.0                 # build linux/amd64 and push
+./release-image.sh v0.3.0 --latest        # also push :latest
+./release-image.sh v0.3.0 --no-push       # build and load locally only
+PLATFORM=linux/amd64,linux/arm64 ./release-image.sh v0.3.0
+IMAGE=docker.io/you/other-name ./release-image.sh v0.3.0
+```
+
+Defaults to `docker.io/binhphuong/claude-cli-adapter` and `linux/amd64`.
+
+It uses `docker buildx`, not `docker build`, for a reason worth knowing: if your
+active builder uses the `docker-container` driver — which it does if any project
+on the machine created one — a plain `docker build` leaves **nothing** in the
+local image store, so the build appears to succeed and the image is nowhere.
+The script pushes straight from the builder, or passes `--load` when
+`--no-push` is given. A multi-platform build cannot be loaded locally at all,
+so `--no-push` rejects that combination rather than failing halfway.
+
+Each image is stamped with the commit it came from:
+
+```
+org.opencontainers.image.revision   5ad1195        (+ "-dirty" if the tree was dirty)
+org.opencontainers.image.version    v0.3.0
+org.opencontainers.image.source     https://github.com/0xphuong/claude-cli-adapter
+```
+
+`CLAUDE_CODE_VERSION` is read from `.env`, falling back to the `ARG` in the
+Dockerfile, so a published image pins the same CLI version compose runs locally.
+The script warns — but does not stop — when the tag has no matching git tag or
+when that tag does not point at `HEAD`.
+
 ### Troubleshooting
 
 | Symptom | Cause |
