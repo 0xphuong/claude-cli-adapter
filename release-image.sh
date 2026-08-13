@@ -87,9 +87,17 @@ docker buildx build "${args[@]}" .
 
 # --- report ------------------------------------------------------------------
 if [ "$PUSH" -eq 1 ]; then
-  note "pushed. digest:"
-  docker buildx imagetools inspect "${IMAGE}:${TAG}" \
-    | sed -n '1,6p' | sed 's/^/    /'
+  # Confirm every tag actually resolves in the registry, not just the build
+  # exiting 0 — and print each digest so ":latest" can be checked against the
+  # version tag it is supposed to alias.
+  pushed=("${TAG}")
+  [ "$ALSO_LATEST" -eq 1 ] && pushed+=("latest")
+  note "pushed ${#pushed[@]} tag(s):"
+  for t in "${pushed[@]}"; do
+    d=$(docker buildx imagetools inspect "${IMAGE}:${t}" 2>/dev/null \
+          | sed -n 's/^Digest: *//p' | head -1)
+    printf '    %-40s %s\n' "${IMAGE}:${t}" "${d:-<not resolvable>}"
+  done
   echo
   note "pull with:  docker pull ${IMAGE}:${TAG}"
 else
