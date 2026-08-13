@@ -1,0 +1,49 @@
+services:
+  adapter:
+    build:
+      context: .
+      args:
+        CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-2.1.229}
+    image: claude-subscription-adapter:latest
+    container_name: claude-subscription-adapter
+    restart: unless-stopped
+
+    # The adapter has NO authentication of its own — it ignores the API key and
+    # will happily serve anyone who can reach it. Bind to loopback only.
+    # Change to "0.0.0.0:8082:8082" only behind a reverse proxy that authenticates.
+    ports:
+      - "127.0.0.1:${ADAPTER_PORT:-8082}:8082"
+
+    # Bare names (no "=") are passed through only when actually set — in the
+    # shell or in ./.env. An unset variable is omitted entirely rather than
+    # injected empty, which would shadow the credentials file.
+    environment:
+      - CLAUDE_CODE_OAUTH_TOKEN
+
+    volumes:
+      # The whole HOME, not just ~/.claude — Claude Code keeps state in BOTH
+      # ~/.claude/ (credentials, projects) and ~/.claude.json (config). Mounting
+      # only the directory loses the config file on every recreate.
+      - claude-home:/home/app
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # `claude -p` spawns a Node process per request with no concurrency limit
+    # in the adapter — cap it here so a burst cannot exhaust the host.
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  claude-home:

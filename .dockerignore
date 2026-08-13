@@ -1,0 +1,46 @@
+# Keep the build context to exactly what the image needs: server.py + requirements.txt
+
+.git
+.gitignore
+.github
+
+# Secrets — must never enter the build context
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Docker's own files
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
+
+# Docs
+README.md
+*.md
+LICENSE
+
+# Tests run against the container from outside; they do not belong in the image
+smoke-test.sh
+smoke-test.py
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Claude Code local state
+.claude/
+CLAUDE.md
