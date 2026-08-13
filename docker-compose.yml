@@ -25,12 +25,11 @@ services:
     #
     # Pin a version tag on anything you care about; :latest moves under you.
     #
-    # Published images are linux/amd64 only:
-    #   * pulling on arm64 needs --platform linux/amd64, and it then runs
-    #     emulated — slow here, because every request spawns a process.
-    #   * a local dev build tags this same name with the NATIVE arch. Never
-    #     `docker push` that by hand; use ./release-image.sh, which always sets
-    #     --platform explicitly.
+    # Published images target linux/amd64 and only that — arm64 is deliberately
+    # out of scope, so `pull` failing on a Mac is expected, not a fault. A local
+    # dev build tags this same name with the NATIVE arch: never `docker push`
+    # that by hand, or an arm64 build lands on a tag servers pull. Use
+    # ./release-image.sh, which always sets --platform explicitly.
     image: docker.io/binhphuong/claude-cli-adapter:${ADAPTER_IMAGE_TAG:-latest}
     container_name: claude-cli-adapter
     restart: unless-stopped

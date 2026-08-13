@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Build and publish the container image.
 #
-#   ./release-image.sh v0.2.0                 # build linux/amd64 and push
-#   ./release-image.sh v0.2.0 --latest        # also push the :latest tag
-#   ./release-image.sh v0.2.0 --no-push       # build and load locally, no push
-#   PLATFORM=linux/amd64,linux/arm64 ./release-image.sh v0.2.0
+#   ./release-image.sh v0.3.0                 # build linux/amd64 and push
+#   ./release-image.sh v0.3.0 --latest        # also push the :latest tag
+#   ./release-image.sh v0.3.0 --no-push       # build and load locally, no push
 #
-# Override the repository without editing this file:
-#   IMAGE=docker.io/you/other-name ./release-image.sh v0.2.0
+# Publishes linux/amd64 only — arm64 is out of scope. PLATFORM and IMAGE stay
+# overridable as escape hatches, but nothing here expects another target:
+#   IMAGE=docker.io/you/other-name ./release-image.sh v0.3.0
 
 set -euo pipefail
 
@@ -24,7 +24,9 @@ while [ $# -gt 0 ]; do
     --no-push) PUSH=0 ;;
     --latest)  ALSO_LATEST=1 ;;
     --platform) shift; PLATFORM="${1:?--platform needs a value}" ;;
-    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    # Print the header block, stopping at the first non-comment line, so editing
+    # the header cannot silently spill code into --help.
+    -h|--help) awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"; exit 0 ;;
     -*) die "unknown option: $1" ;;
     *) [ -z "$TAG" ] || die "tag given twice: '$TAG' and '$1'"; TAG="$1" ;;
   esac

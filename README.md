@@ -157,15 +157,16 @@ ADAPTER_IMAGE_TAG=v0.3.0 docker compose up -d
 Put `ADAPTER_IMAGE_TAG` in `.env` on a server rather than repeating it. Pin a
 version tag on anything you care about — `:latest` moves under you.
 
-Published images are **`linux/amd64` only**, which has two consequences:
+Published images target **`linux/amd64`, and only that** — deployment goes to
+amd64 Linux servers, and arm64 is deliberately out of scope. Two consequences:
 
-- Pulling on arm64 (Apple Silicon, Graviton) needs `--platform linux/amd64` and
-  then runs emulated. That is a poor fit here, because every request spawns a
-  process. Build natively instead, or publish multi-arch:
-  `PLATFORM=linux/amd64,linux/arm64 ./release-image.sh v0.3.1 --latest`.
+- `docker compose pull` **fails on an arm64 machine** with `no matching manifest
+  for linux/arm64/v8`. That is expected, not a fault. Develop on a Mac with
+  `docker compose up -d --build`, which builds natively from this checkout and
+  never touches the registry.
 - A local dev build tags that same published name with your **native** arch. Do
-  not `docker push` it by hand — use `./release-image.sh`, which always sets
-  `--platform` explicitly.
+  not `docker push` it by hand, or an arm64 build lands on a tag that servers
+  pull — use `./release-image.sh`, which always sets `--platform` explicitly.
 
 ### Testing
 
@@ -210,11 +211,12 @@ docker login                              # once
 ./release-image.sh v0.3.0                 # build linux/amd64 and push
 ./release-image.sh v0.3.0 --latest        # also push :latest
 ./release-image.sh v0.3.0 --no-push       # build and load locally only
-PLATFORM=linux/amd64,linux/arm64 ./release-image.sh v0.3.0
 IMAGE=docker.io/you/other-name ./release-image.sh v0.3.0
 ```
 
-Defaults to `docker.io/binhphuong/claude-cli-adapter` and `linux/amd64`.
+Defaults to `docker.io/binhphuong/claude-cli-adapter` and `linux/amd64`, which is
+the only platform published. `PLATFORM` remains overridable as an escape hatch if
+that ever changes, but nothing here expects another architecture.
 
 It uses `docker buildx`, not `docker build`, for a reason worth knowing: if your
 active builder uses the `docker-container` driver — which it does if any project
