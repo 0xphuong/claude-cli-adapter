@@ -3,23 +3,8 @@
 # Claude CLI Adapter
 # --------------------------------
 # The runtime needs two toolchains: Node (to run the Claude Code CLI) and
-# Python (to run the FastAPI server). Both build stages and the runtime share
+# Python (to run the FastAPI adapter). Both build stages and the runtime share
 # a single Debian bookworm base so the venv's interpreter symlinks stay valid.
-#
-# The server is claude_proxy/server.py — the caching proxy. It differs from the
-# original adapter (kept as Dockerfile.v1) in two ways that matter to the image:
-#
-#   * it uses `--append-system-prompt`, not `--system-prompt`, so the system
-#     prompt lands in Claude Code's cached block instead of being re-billed as
-#     fresh input on every call; and
-#   * it reuses one CLI session per (system, tools) fingerprint via
-#     `--session-id` / `--resume`, so the CLI must be allowed to PERSIST those
-#     sessions. They live under $HOME/.claude/projects/, which is why the HOME
-#     volume is load-bearing here and not merely convenient.
-#
-# Logs go to stdout/stderr (uvicorn's default) and are captured by the Docker
-# logging driver — the image never writes a log file. PYTHONUNBUFFERED below
-# keeps them from sitting in a pipe buffer.
 
 ARG NODE_IMAGE=node:22-bookworm-slim
 ARG CLAUDE_CODE_VERSION=2.1.229
@@ -69,10 +54,8 @@ COPY --from=claude-cli  /opt/claude /opt/claude
 RUN ln -s /opt/claude/bin/claude /usr/local/bin/claude
 
 # Application code stays root-owned and read-only to the service account.
-# Source is claude_proxy/server.py; the in-image path stays /app/server.py so
-# CMD, the healthcheck and every deployment command are unaffected.
 WORKDIR /app
-COPY --chmod=0444 claude_proxy/server.py /app/server.py
+COPY --chmod=0444 server.py /app/server.py
 COPY --chmod=0555 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # `claude -p` inherits the server's cwd. Give it an empty, writable directory
@@ -91,10 +74,8 @@ WORKDIR /workspace
 
 EXPOSE 8082
 
-# server.py defaults to 127.0.0.1:8090, neither of which suits a container:
-# loopback is unreachable from outside, and 8082 is the port every compose file,
-# healthcheck and smoke test in this repo already speaks. Both are passed
-# explicitly in CMD, so the module defaults never apply here.
+# server.py defaults to 127.0.0.1, which is unreachable from outside the
+# container — bind 0.0.0.0 here and restrict exposure at the port mapping.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD ["/opt/venv/bin/python", "-c", \
        "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8082/health', timeout=4).status == 200 else 1)"]

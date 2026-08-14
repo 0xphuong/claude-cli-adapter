@@ -52,13 +52,20 @@ services:
       - ANTHROPIC_BASE_URL
       - ANTHROPIC_AUTH_TOKEN
       - ANTHROPIC_API_KEY
-      # Model used when a client sends no "model" field.
-      - ADAPTER_DEFAULT_MODEL
+      # NOTE: ADAPTER_DEFAULT_MODEL is deliberately absent. The proxy now in the
+      # image has no default model — it forwards whatever the client sends (minus
+      # a "cc/" gateway prefix) and lets the CLI choose when the field is empty.
+      # smoke-test.sh still reads the variable from .env to pick a test model, so
+      # keeping it in .env is harmless; the container simply never reads it.
 
     volumes:
       # The whole HOME, not just ~/.claude — Claude Code keeps state in BOTH
       # ~/.claude/ (credentials, projects) and ~/.claude.json (config). Mounting
       # only the directory loses the config file on every recreate.
+      #
+      # This volume also holds the CLI session transcripts under
+      # ~/.claude/projects/, which `--resume` needs. They accumulate; if the
+      # volume ever grows uncomfortably, that is what to prune.
       - claude-home:/home/app
 
     security_opt:
@@ -74,6 +81,8 @@ services:
           cpus: "2.0"
           memory: 2G
 
+    # The service logs to stdout/stderr only — no log file, nothing to mount.
+    # Read it with `docker compose logs -f`; rotation is handled here.
     logging:
       driver: json-file
       options:

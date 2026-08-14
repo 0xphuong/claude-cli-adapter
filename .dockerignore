@@ -1,4 +1,9 @@
-# Keep the build context to exactly what the image needs: server.py + requirements.txt
+# Keep the build context to exactly what the image needs: requirements.txt plus
+# the server — claude_proxy/server.py for Dockerfile, server.py for Dockerfile.v1.
+#
+# Patterns here are matched against the WHOLE relative path and `*` does not
+# cross a `/`, so a bare `*.md` only ever hides top-level files. Anything meant
+# to apply inside claude_proxy/ needs the `**/` form.
 
 .git
 .gitignore
@@ -17,10 +22,18 @@ Dockerfile
 docker-compose.yml
 docker-compose.*.yml
 
+# Docker's own files (v1 keeps the pre-proxy adapter build)
+Dockerfile.v1
+
 # Docs
 README.md
 *.md
+**/*.md
 LICENSE
+
+# Runtime logs — the service logs to stdout; a *.log here is a local artefact
+*.log
+**/*.log
 
 # Tests run against the container from outside; they do not belong in the image
 smoke-test.sh
@@ -43,4 +56,5 @@ venv/
 
 # Claude Code local state
 .claude/
+**/.claude/
 CLAUDE.md

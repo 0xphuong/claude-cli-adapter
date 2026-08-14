@@ -3,6 +3,14 @@
 .env.*
 !.env.example
 
+# Runtime logs. The service writes to stdout and Docker captures it; a *.log in
+# the tree only ever comes from running server.py by hand with a redirect.
+*.log
+
+# Transfer artefacts — the proxy source arrived as a zip. Nothing here is built
+# from an archive, and release.sh runs `git add .`.
+*.zip
+
 # Python
 __pycache__/
 *.py[cod]
